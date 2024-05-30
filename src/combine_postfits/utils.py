@@ -20,6 +20,90 @@ cmap10 = [
     "#717581",
     "#92dadd",
 ]
+latex_opts = {
+        'ElEl'     : 'ee',
+        'MuMu'     : '$\mu\mu$',
+        'MuEl'     : '$\mu e$',
+        'MuMu_ElEl': '$\mu\mu + ee$',
+        'OSSF'     : '($\mu\mu + ee$)',
+        'ElEl_MuEl': 'ee + $\mu e$',
+        'MuMu_MuEl': '$\mu\mu + \mu e$',
+        'OSSF_MuEl': '($\mu\mu + ee) + \mu e$',
+        'MuMu_ElEl_MuEl': '$\mu\mu + ee + \mu e$',
+}
+
+
+def getYear(cats):
+    year_lookup = {
+        'UL16': 2016,
+        'UL17': 2017,
+        'UL18': 2018
+    }
+    # Create a set to collect the unique years found in the cats
+    years_found = set()
+    # Check for each year in the cats
+    for cat in cats:
+        for key in year_lookup:
+            if key in cat:
+                years_found.add(key)
+    # If all years are found or 'fullrun2' is in cats, return 'Run2'
+    if years_found == {'UL16', 'UL17', 'UL18'} or 'fullrun2' in ' '.join(cats):
+        return "Run2"
+    # Otherwise, return the specific year found (assuming there's only one)
+    for year in years_found:
+        return year_lookup[year]
+
+
+def getLuminosity(era):
+    era = str(era)
+    if era == '2016-preVFP':
+        lumi = 19667.812849099
+    elif era == '2016-postVFP':
+        lumi = 16977.701784453
+    elif era == '2016':
+        lumi = 35921.875594646
+    elif era == '2017':
+        lumi = 41529.152060112
+    elif era == '2018':
+        lumi = 59740.565201546
+    elif era == 'Run2':
+        lumi = 138000
+    return f"{lumi / 1000:.2f}" # fb
+ 
+
+def add_to_headers(cat, headers, latex_opts):
+    ch_per_bin = cat.split('_')[4:]
+    ch_per_bin[-1] = latex_opts[ch_per_bin[-1]]
+    if ch_per_bin not in headers:
+        headers.append(ch_per_bin)
+
+def write_ZAHeader(cats):
+    headers  = []
+    combYears= ''
+    for cat in cats:
+        if ',' in cat:
+            combcat = cat.split(',')
+            for subcat in combcat:
+                add_to_headers(subcat, headers, latex_opts)
+        else:
+            add_to_headers(cat, headers, latex_opts)
+
+    reco = []
+    region = []
+    flavor = []
+    for t in headers:
+        nb, reg, flav = t
+        if nb not in reco:
+            reco.append(nb)
+        if reg not in region:
+            region.append(reg)
+        if flav not in flavor:
+            flavor.append(flav)
+
+    year = getYear(cats)
+    lumi = getLuminosity(year)
+    catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}" 
+    return catheader, year, lumi
 
 def adjust_lightness(color, amount=0.5):
     import matplotlib.colors as mc
@@ -325,15 +409,20 @@ def format_legend(ax, ncols=2, handles_labels=None, **kwargs):
     return leg1
 
 
-def format_categories(cats, n=2):
-    # cat, cat \n cat, cat
-    lab_cats = np.array(["x"] * (2 * len(cats) - 1), dtype="object")
-    lab_cats[0::2] = cats
-    lab_cats[1::2][n - 1 :: n] = "\n"
-    for i in range(len(lab_cats)):
-        if lab_cats[i] == "x":
-            lab_cats[i] = ","
-    return "".join(list(lab_cats))
+def format_categories(cats, n=2, catheader=None, zaheader=True):
+    if catheader is not None:
+        return catheader
+    elif zaheader:
+        return write_ZAHeader(cats)[0]
+    else:
+        # cat, cat \n cat, cat
+        lab_cats = np.array(["x"] * (2 * len(cats) - 1), dtype="object")
+        lab_cats[0::2] = cats
+        lab_cats[1::2][n - 1 :: n] = "\n"
+        for i in range(len(lab_cats)):
+            if lab_cats[i] == "x":
+                lab_cats[i] = ","
+        return "".join(list(lab_cats))
 
 
 # fitDiag extraction

@@ -107,6 +107,12 @@ def main():
         help="Either a comma-separated list of categories to plot or a mapping of categories to plot together, e.g. `cat1,cat2` in the form of `mcat1:cat1,cat2;mcat2:cat3,cat4`",
     )
     parser.add_argument(
+        "--catheader",
+        default=None,
+        dest="catheader",
+        help="header to print after combination"
+    )
+    parser.add_argument(
         "--sigs",
         default=None,
         dest="sigs",
@@ -269,7 +275,7 @@ def main():
         assert unblind_conf, "Unblind option not confirmed. Exiting."
 
     if args.fit == "all":
-        fit_types = ["prefit", "fit_s"]
+        fit_types = ["prefit", "fit_s", "fit_b"]
     else:
         fit_types = [args.fit]
     for fit in fit_types:
@@ -374,6 +380,7 @@ def main():
     logging.debug(f"All Types: {all_types}")
     logging.debug(f"All Savenames: {all_savenames}")
 
+
     _procs = []
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -392,6 +399,11 @@ def main():
         for fittype, channel, blind, sname in zip(
             all_types, all_channels, all_blinds, all_savenames
         ):
+            zaheader= True
+            if zaheader:
+                catheader, year, lumi = utils.write_ZAHeader(channel)
+                args.year = year
+                args.lumi = lumi
             # Wrap it in a function to enable parallel processing
             def mod_plot(semaphore=None):
                 fig, (ax, rax) = plot.plot(
@@ -412,6 +424,7 @@ def main():
                     style=style,
                     cat_info=1 if len(channel) < 6 else {s.split(":")[0]:s.split(":")[1] for s in args.cats.split(";")}[sname],
                     chi2=True,
+                    catheader=args.catheader
                 )
                 if fig is None:
                     return None
@@ -453,6 +466,7 @@ def main():
                     )
                 if semaphore is not None:
                     semaphore.release()
+                matplotlib.pyplot.close(fig)
 
             if args.multiprocessing > 0:
                 semaphore.acquire()

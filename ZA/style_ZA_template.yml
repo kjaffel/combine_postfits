@@ -1,0 +1,55 @@
+data:
+  label: Data
+  color: black
+  hatch: null
+total:
+  label: total
+  color: '#3f90da'
+  hatch: null
+total_signal:
+  label: total_signal
+  color: '#ffa90e'
+  hatch: null
+total_background:
+  label: total_background
+  color: '#bd1f01'
+  hatch: null
+DY:
+  label: DY+jets 
+  color: '#0000FF'
+  hatch: \\\\\
+  contains:
+  - DY0b
+  - DY1b
+  - DY2b
+tt:
+  label: tt
+  color: '#c4ffff'
+  hatch: null 
+ttB:
+  label: ttB
+  color: '#abb2b9'
+  hatch: null 
+SingleTop:
+  label: ST
+  color: '#ffc800'
+  hatch: null 
+VV:
+  label: VV
+  color: '#9370DB'
+  hatch: null 
+SMHiggs:
+  label: ggh,tth,Zh
+  color: '#43294D'
+  hatch: null 
+others: 
+  label: VVV,ttV
+  color: '#ff8d58'
+  hatch: \\\\\
+  contains:
+  - ttV
+  - VVV
+signal:
+  label: mass
+  color: '#FF0A2A'
+  hatch: null

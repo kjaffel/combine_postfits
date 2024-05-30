@@ -24,7 +24,6 @@ pp = pprint.PrettyPrinter(indent=2, sort_dicts=False)
 
 def log_pretty(obj):
     pretty_out = f"{pp.pformat(obj)}"
-
     return f"{pretty_out}\n"
 
 @typechecked
@@ -48,6 +47,7 @@ def plot(
     | int
     | str = False,  # Remove enteries with total yield below treshold eg. {False | 10 | '5%'}
     # Style opts
+    catheader=None,
     restoreNorm=True,  # Combine outputs binwnormed results - restores to nominal
     fitDiag_root=None,  # ROOT fitDiagnostics file to read fit results and display signal strength
     rmap: dict | None = None,
@@ -151,6 +151,7 @@ def plot(
 
     # Remove tiny
     if remove_tiny:
+        logging.info(f'Remove enteries with total yield below treshold; {remove_tiny}')
         if isinstance(remove_tiny, str) and remove_tiny.endswith("%"):
             _th = float(remove_tiny[:-1]) * 0.005 * np.sum(data.values())
         elif remove_tiny is True:
@@ -519,7 +520,13 @@ def plot(
     else:
         # Don't write postfit to save space, just print r
         if fitDiag_root is None:
-            leg.set_title(title="Postfit", prop={"size": "small"})
+            if fit_type == "fit_s":
+                title = 'Postfit: S+B'
+            elif fit_type == "fit_b":
+                title = 'Postfit: B-Only'
+            else:
+                title = 'Prefit'
+            leg.set_title(title=title, prop={"size": "small"})
         else:
             # Write signal strengths
             leg.set_title(title=None, prop={"size": "small"})
@@ -584,10 +591,10 @@ def plot(
         if isinstance(cat_info, str):
             cats, cat_info = [cat_info], 1
         at = AnchoredText(
-            f"Categories: \n{format_categories(cats, cat_info)}",
+            f"Categories: \n{format_categories(cats, cat_info, catheader, zaheader=True)}",
             loc="upper left",
             pad=0.8,
-            prop=dict(size="x-small", ha="center"),
+            prop=dict(size="xx-small", ha="center"),
             frameon=False,
         )
         ax.add_artist(at)
