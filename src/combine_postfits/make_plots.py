@@ -189,7 +189,7 @@ def main():
     parser.add_argument(
         "--year",
         default=None,
-        choices={"2016", "2017", "2018", ""},
+        choices={"2022", "2022EE", "2023", "2023BPix", "2016", "2017", "2018", ""},
         type=str,
         help="year label",
     )
@@ -225,10 +225,23 @@ def main():
         help="Hide zeroth tick on the y-axis.",
     )
     parser.add_argument(
+        "--chi2",
+        type=str2bool,
+        default="True",
+        choices={True, False},
+        help="Don't show chi2 indicator",
+    )
+    parser.add_argument(
         "--cmslabel",
         default="Private Work",
         type=str,
         help="CMS Label",
+    )
+    parser.add_argument(
+        "--catlabels",
+        default=None,
+        type=str,
+        help="Category label to replace automated labelling. To pass per-category label, use `;` separator.",
     )
     parser.add_argument(
         "--dpi",
@@ -237,6 +250,8 @@ def main():
         help="dpi for png format",
     )
     parser.add_argument("--noroot", action="store_true", help="Skip ROOT dependency")
+
+    convert_to_mass =True  # at some point turn to flag 
 
     # Debug
     parser.add_argument("--verbose", "-v", "-_v", action="store_true", help="Verbose logging")
@@ -333,6 +348,7 @@ def main():
     all_blinds = []
     all_types = []
     all_savenames = []
+    all_labels = []
     for fit_type in fit_types:
         # all channels
         available_channels = [
@@ -344,6 +360,7 @@ def main():
             channels = [[c] for c in available_channels]
             blinds = [True if c[0] in blind_cats else False for c in channels]
             savenames = [c for c in available_channels]
+            labels = [None for c in available_channels]
             logging.debug(f"Plotting channels: {channels}")
         # Parse --cats, either mapping or list
         else:
@@ -369,17 +386,26 @@ def main():
                 savenames = [c for c in channels]
                 channels = [[c] for c in channels]
                 logging.debug(f"Plotting channels: {channels}")
+            if args.catlabels is not None:
+                if ";" in args.catlabels:
+                    labels = args.catlabels.split(";")
+                else:
+                    labels = [args.catlabels for c in channels]
+            else:
+                labels = [c for c in savenames]
+            labels = ["\n".join(lab.split("\\n")) for lab in labels]  # hacky but needed to pass \n from cmdline
         assert len(channels) != 0, f"Channel matching failed for --cats '{args.cats}'. Available categories are :{available_channels}"
         assert isinstance(channels[0], list)
         all_channels.extend(channels)
         all_blinds.extend(blinds)
         all_types.extend([fit_type] * len(channels))
         all_savenames.extend(savenames)
+        all_labels.extend(labels)
     logging.debug(f"All Channels: {all_channels}")
     logging.debug(f"All Blinds: {all_blinds}")
     logging.debug(f"All Types: {all_types}")
     logging.debug(f"All Savenames: {all_savenames}")
-
+    logging.debug(f"All Labels: {all_labels}")
 
     _procs = []
     with Progress(
@@ -396,15 +422,17 @@ def main():
         prog_str = prog_str_fmt.format("N")
         prog_plotting = progress.add_task(prog_str, total=len(all_channels))
         semaphore = Semaphore(args.multiprocessing)
-        for fittype, channel, blind, sname in zip(
-            all_types, all_channels, all_blinds, all_savenames
+        for fittype, channel, blind, sname, label in zip(
+            all_types, all_channels, all_blinds, all_savenames, all_labels
         ):
-            zaheader= True
+            zaheader= False
             if zaheader:
                 catheader, year, lumi = utils.write_ZAHeader(channel)
                 args.year = year
                 args.lumi = lumi
             # Wrap it in a function to enable parallel processing
+            if label is None:
+                label = 1 if len(channel) < 6 else {s.split(":")[0]:s.split(":")[1] for s in args.cats.split(";")}[sname]
             def mod_plot(semaphore=None):
                 fig, (ax, rax) = plot.plot(
                     fd,
@@ -418,26 +446,38 @@ def main():
                     rmap=rmap,
                     blind=blind,
                     cats=channel,
-                    restoreNorm=True,
+                    restoreNorm=False,
                     clipx=args.clipx,
                     fitDiag_root=rfd,
                     style=style,
-                    cat_info=1 if len(channel) < 6 else {s.split(":")[0]:s.split(":")[1] for s in args.cats.split(";")}[sname],
-                    chi2=True,
+                    #cat_info=1 if len(channel) < 6 else {s.split(":")[0]:s.split(":")[1] for s in args.cats.split(";")}[sname],
+                    cat_info=label,
+                    chi2=args.chi2,
                     catheader=args.catheader
                 )
                 if fig is None:
                     return None
                 # Styling
                 if args.xlabel is not None:
-                    rax.set_xlabel(args.xlabel)
+                    if convert_to_mass:
+                        #rax.set_xticks([]) # Hide the original x-axis ticks only
+                        rax.xaxis.set_visible(False) # Hide the original x-axis ticks and label
+                        rax2 = rax.twiny()
+                        rax2.xaxis.set_ticks_position('bottom')  # Set ticks for the new axis at the bottom
+                        rax2.xaxis.set_label_position('bottom')
+                        rax2.set_xlim(100., 1400.)
+                        rax2.set_xlabel(args.xlabel, labelpad=15)
+                    else:
+                        rax.set_xlabel(args.xlabel)
+                    
                 if args.ylabel is not None:
-                    rax.set_ylabel(args.xlabel)
+                    rax.set_ylabel(args.ylabel)
                 hep.cms.label(
                     args.cmslabel,
                     data=not args.pseudo,
                     ax=ax,
                     lumi=args.lumi,
+                    #lumi_format="{:0.0f}",
                     pub=args.pub,
                     year=args.year,
                 )

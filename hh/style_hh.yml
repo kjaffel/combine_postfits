@@ -1,0 +1,57 @@
+data:
+  label: Data
+  color: black
+  hatch:
+total:
+  label: total
+  color: '#3f90da'
+  hatch:
+total_signal:
+  label: total_signal
+  color: '#ffa90e'
+  hatch:
+total_background:
+  label: total_background
+  color: '#bd1f01'
+  hatch:
+QCD:
+  label: QCD
+  color: '#e76300'
+  hatch:
+V+jets:
+  label: V+jets
+  color: '#ffc800'
+  hatch:
+VBF:
+  label: VBF
+  color: '#E5E4E2'
+  hatch:
+VV:
+  label: VV
+  color: '#92dadd'
+  hatch:
+Vh:
+  label: Vh
+  color: '#CCCCFF'
+  hatch:
+tt:
+  label: tt
+  color: '#c4ffff'
+  hatch:
+tth:
+  label: tth
+  color: '#832db6'
+  hatch:
+ggH:
+  label: ggH
+  color: '#3f90da'
+  hatch:
+ggh:
+  label: "$ggh: (k_{\\lambda},k_{t},c_{2})=(5,1,0)$"
+  color: '#FF0A2A'
+  hatch:
+nmssm_XtoYH:
+  label: '$NMSSM: (m_{X},m_{Y})=(1000,100)GeV$'
+  color: '#FF0A2A'
+  hatch:
+

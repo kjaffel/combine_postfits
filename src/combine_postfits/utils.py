@@ -19,18 +19,18 @@ cmap10 = [
     "#b9ac70",
     "#717581",
     "#92dadd",
-]
+    ]
 latex_opts = {
-        'ElEl'     : 'ee',
-        'MuMu'     : '$\mu\mu$',
-        'MuEl'     : '$\mu e$',
-        'MuMu_ElEl': '$\mu\mu + ee$',
-        'OSSF'     : '($\mu\mu + ee$)',
-        'ElEl_MuEl': 'ee + $\mu e$',
-        'MuMu_MuEl': '$\mu\mu + \mu e$',
-        'OSSF_MuEl': '($\mu\mu + ee) + \mu e$',
-        'MuMu_ElEl_MuEl': '$\mu\mu + ee + \mu e$',
-}
+    'ElEl'     : 'ee',
+    'MuMu'     : '$\mu\mu$',
+    'MuEl'     : '$\mu e$',
+    'MuMu_ElEl': '$\mu\mu + ee$',
+    'OSSF'     : '$\mu\mu + ee$',
+    'ElEl_MuEl': '$ee + \mu e$',
+    'MuMu_MuEl': '$\mu\mu + \mu e$',
+    'OSSF_MuEl': '$\mu\mu + ee + \mu e$',
+    'MuMu_ElEl_MuEl': '$\mu\mu + ee + \mu e$',
+    }
 
 
 def getYear(cats):
@@ -56,6 +56,7 @@ def getYear(cats):
 
 def getLuminosity(era):
     era = str(era)
+    lumi = 138000
     if era == '2016-preVFP':
         lumi = 19667.812849099
     elif era == '2016-postVFP':
@@ -68,16 +69,25 @@ def getLuminosity(era):
         lumi = 59740.565201546
     elif era == 'Run2':
         lumi = 138000
+    elif era == '2022':
+        lumi = 7980.4
+    elif era == '2022EE':
+        lumi = 26671.7
+    elif era == '2023':
+        lumi = 17794.0
+    elif era == '2023BPix':
+        lumi = 9451.0
     return f"{lumi / 1000:.2f}" # fb
  
 
 def add_to_headers(cat, headers, latex_opts):
     ch_per_bin = cat.split('_')[4:]
-    ch_per_bin[-1] = latex_opts[ch_per_bin[-1]]
-    if ch_per_bin not in headers:
-        headers.append(ch_per_bin)
+    if ch_per_bin[-1] in  latex_opts.keys():
+        ch_per_bin[-1] = latex_opts[ch_per_bin[-1]]
+        if ch_per_bin not in headers:
+            headers.append(ch_per_bin)
 
-def write_ZAHeader(cats):
+def write_ZAHeader(cats, year=None):
     headers  = []
     combYears= ''
     for cat in cats:
@@ -87,7 +97,7 @@ def write_ZAHeader(cats):
                 add_to_headers(subcat, headers, latex_opts)
         else:
             add_to_headers(cat, headers, latex_opts)
-
+    
     reco = []
     region = []
     flavor = []
@@ -99,8 +109,9 @@ def write_ZAHeader(cats):
             region.append(reg)
         if flav not in flavor:
             flavor.append(flav)
-
-    year = getYear(cats)
+    
+    if not year:
+        year = getYear(cats)
     lumi = getLuminosity(year)
     catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}" 
     return catheader, year, lumi

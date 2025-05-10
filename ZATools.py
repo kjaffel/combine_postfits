@@ -13,7 +13,7 @@ def WriteChannelOnPlotIt(channels, latex_opts):
         plotit_texts[ch] = ch_per_bin
     return plotit_texts
 
-def get_cats_to_plot(channels):
+def get_cats_to_plot(mode, channels):
     combine_cats_per_year = []
     all_ = []
     noCR = []
@@ -24,12 +24,13 @@ def get_cats_to_plot(channels):
         all_.append(c2)
         if 'MuEl' not in c2:
             noCR.append(c2)
-    #tot_cats = ';'.join(combine_cats_per_year)+f";fullrun2_{'_'.join(channels.keys())}:{','.join(all_)}" + f";fullrun2_noCR:{','.join(noCR)}"
-    tot_cats = f"fullrun2_{'_'.join(channels.keys())}:{','.join(all_)}" + f";fullrun2_noCR:{','.join(noCR)}"
+    #tot_cats = ';'.join(combine_cats_per_year)+f";fullrun2_{'_'.join(channels.keys())}:{','.join(all_)}" #+ f";fullrun2_noCR:{','.join(noCR)}"
+    tot_cats = f"fullrun2_{mode}_{'_'.join(channels.keys())}:{','.join(all_)}" + f";fullrun2_noCR_{mode}:{','.join(noCR)}"
     
     reco = []
     region = []
     flavor = []
+    """
     texts = WriteChannelOnPlotIt(channels, latex_opts)
     for i, t in enumerate(texts.values()):
         nb, reg, flav = t
@@ -39,12 +40,14 @@ def get_cats_to_plot(channels):
             region.append(reg)
         if flav not in flavor:
             flavor.append(flav)
-
+    
     catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}"
+    """
+    catheader = ''
 
     #print(tot_cats)
-    print(tot_cats +'---'+ catheader)
     #print(catheader)
+    print(tot_cats +'---'+ catheader)
 
 if __name__ == "__main__":
     latex_opts = {
@@ -61,14 +64,37 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='PreFit/PostFit Producer')
     parser.add_argument('-f', '--fitdiag', action='store', required=True, default=None, help='')
+    parser.add_argument('--mode', action='store', required=True, default='dnn', help='')
     options = parser.parse_args()
 
-    basedir = os.path.dirname(options.fitdiag) 
-    #FIXME
-    with open(os.path.join(basedir.replace('ext1','ext1p1'), 'channels.json'), 'r') as file:
-        channels = json.load(file)
+    if 'HToZA' in options.fitdiag: heavy, light = ['H', 'A']
+    else:heavy, light = ['A', 'H']
     
-    get_cats_to_plot(channels)
+    mode = options.mode
+    forceMuElCr = True
+
+    # fitDiagnosticsHToZATo2L2B_gg_fusion_nb2_resolved_boosted_OSSF_mbb_MH_442.63_MA_95.27.root
+    opts = options.fitdiag.split('/')[-1].split('_')
+    prod = '_'.join(opts[1:3])
+    nb   = opts[3] 
+    process = f'gg{heavy}' if prod == 'gg_fusion' else f'bb{heavy}' 
+    basedir = os.path.dirname(options.fitdiag) 
+    catname = options.fitdiag.replace('.root', '').split('/')[-1].split(prod)[-1].split(f'_{mode}_')[0] 
+    
+    print( prod, 'heyyy' )
+    #================== FIXME
+    #with open(os.path.join(basedir, f'channels{catname}_fit_b.json'), 'r') as file:
+    with open(os.path.join(basedir, f'channels_{mode}_{nb}_resolved_boosted_OSSF_fit_b.json'), 'r') as file:
+        channels = json.load(file)
+    if not channels:
+        with open(os.path.join(basedir, f'channels_{mode}_{nb}_resolved_boosted_OSSF_fit_s.json'), 'r') as file:
+            channels = json.load(file)
+    if not channels:
+        ch_per_year = options.fitdiag.replace('.root', '').split('/')[-1].split('OSSF_')[-1]
+        channels ={'ch1': [f"{ch_per_year}_{era}".replace('.','p') for era in ['UL16', 'UL17', 'UL18']]}
+    #===================
+
+    get_cats_to_plot(mode, channels)
     yaml = YAML()
     with open("ZA/style_ZA_template.yml", 'r') as file:
         data = yaml.load(file)
@@ -77,10 +103,6 @@ if __name__ == "__main__":
     mheavy = mass[-3] 
     mlight = mass[-1]
 
-    if 'HToZA' in options.fitdiag: heavy, light = ['H', 'A']
-    else:heavy, light = ['A', 'H']
-    
-    process    = f'gg{heavy}' if 'gg_fusion' in options.fitdiag else f'bb{heavy}' 
     #masslabel = f"{process}: $(m_{heavy},m_{light})= ({mheavy}, {mlight}) GeV$"
     masslabel  = f"{process}: $({mheavy}, {mlight}) GeV$"
     data['signal']['label'] = masslabel 
