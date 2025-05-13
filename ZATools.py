@@ -13,6 +13,7 @@ def WriteChannelOnPlotIt(channels, latex_opts):
         plotit_texts[ch] = ch_per_bin
     return plotit_texts
 
+
 def get_cats_to_plot(mode, channels):
     combine_cats_per_year = []
     all_ = []
@@ -40,16 +41,21 @@ def get_cats_to_plot(mode, channels):
             region.append(reg)
         if flav not in flavor:
             flavor.append(flav)
-    
     catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}"
     """
     catheader = ''
-
     #print(tot_cats)
     #print(catheader)
     print(tot_cats +'---'+ catheader)
+    return
+
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='PreFit/PostFit Producer')
+    parser.add_argument('-f', '--fitdiag', action='store', required=True, default=None, help='')
+    parser.add_argument('--mode', action='store', required=True, choices=['dnn', 'mbb', 'mllbb'], help='')
+    options = parser.parse_args()
+    
     latex_opts = {
         'ElEl'     : 'ee',
         'MuMu'     : '$\mu\mu$',
@@ -62,18 +68,13 @@ if __name__ == "__main__":
         'MuMu_ElEl_MuEl': '$\mu\mu + ee + \mu e$',
     }
 
-    parser = argparse.ArgumentParser(description='PreFit/PostFit Producer')
-    parser.add_argument('-f', '--fitdiag', action='store', required=True, default=None, help='')
-    parser.add_argument('--mode', action='store', required=True, default='dnn', help='')
-    options = parser.parse_args()
-
     if 'HToZA' in options.fitdiag: heavy, light = ['H', 'A']
-    else:heavy, light = ['A', 'H']
+    else: heavy, light = ['A', 'H']
     
     mode = options.mode
     forceMuElCr = True
 
-    # fitDiagnosticsHToZATo2L2B_gg_fusion_nb2_resolved_boosted_OSSF_mbb_MH_442.63_MA_95.27.root
+    # .e.g. fitDiagnosticsHToZATo2L2B_gg_fusion_nb2_resolved_boosted_OSSF_mbb_MH_442.63_MA_95.27.root
     opts = options.fitdiag.split('/')[-1].split('_')
     prod = '_'.join(opts[1:3])
     nb   = opts[3] 
@@ -81,7 +82,6 @@ if __name__ == "__main__":
     basedir = os.path.dirname(options.fitdiag) 
     catname = options.fitdiag.replace('.root', '').split('/')[-1].split(prod)[-1].split(f'_{mode}_')[0] 
     
-    print( prod, 'heyyy' )
     #================== FIXME
     #with open(os.path.join(basedir, f'channels{catname}_fit_b.json'), 'r') as file:
     with open(os.path.join(basedir, f'channels_{mode}_{nb}_resolved_boosted_OSSF_fit_b.json'), 'r') as file:

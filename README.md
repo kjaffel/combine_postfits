@@ -1,9 +1,10 @@
 # Installation
 
 ```
-gh repo clone andrzejnovak/combine_postfits
-cd combine_postfits
-pip install -e .
+wget https://raw.githubusercontent.com/kjaffel/combine_postfits/ForZAllbb_analysis/venv_steup.sh
+
+# choose between singularity or pyvenv  
+source venv_steup.sh
 ```
 
 # Run
