@@ -22,6 +22,10 @@ DY:
   - DY0b
   - DY1b
   - DY2b
+toponium:
+  label: toponium
+  color: '#688c8f'
+  hatch: null 
 tt:
   label: tt
   color: '#c4ffff'

@@ -14,23 +14,28 @@ def WriteChannelOnPlotIt(channels, latex_opts):
     return plotit_texts
 
 
-def get_cats_to_plot(mode, channels):
+def get_cats_to_plot(mode, process, channels):
     combine_cats_per_year = []
-    all_ = []
-    noCR = []
+    all_cats = []
+    SRonly_cats = []
+    
     for ch, cats in channels.items():
-        c  = f"{ch}:{','.join(cats)}"
+        random_cat = cats[0].split('_UL')[0]
+        c  = f"fullrun2_{ch}_{process}_{random_cat}:{','.join(cats)}"
         c2 = f"{','.join(cats)}"
         combine_cats_per_year.append(c)
-        all_.append(c2)
+        all_cats.append(c2)
         if 'MuEl' not in c2:
-            noCR.append(c2)
-    #tot_cats = ';'.join(combine_cats_per_year)+f";fullrun2_{'_'.join(channels.keys())}:{','.join(all_)}" #+ f";fullrun2_noCR:{','.join(noCR)}"
-    tot_cats = f"fullrun2_{mode}_{'_'.join(channels.keys())}:{','.join(all_)}" + f";fullrun2_noCR_{mode}:{','.join(noCR)}"
+            SRonly_cats.append(c2)
+    
+    tot_cats  = ';'.join(combine_cats_per_year)
+    #tot_cats += f";fullrun2_{'_'.join(channels.keys())}:{','.join(all_cats)}"
+    #tot_cats += f";fullrun2_SRonly_cats:{','.join(SRonly_cats)}"
     
     reco = []
     region = []
     flavor = []
+    
     """
     texts = WriteChannelOnPlotIt(channels, latex_opts)
     for i, t in enumerate(texts.values()):
@@ -43,9 +48,8 @@ def get_cats_to_plot(mode, channels):
             flavor.append(flav)
     catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}"
     """
-    catheader = ''
-    #print(tot_cats)
-    #print(catheader)
+    catheader = '' # reset for now
+    
     print(tot_cats +'---'+ catheader)
     return
 
@@ -72,36 +76,38 @@ if __name__ == "__main__":
     else: heavy, light = ['A', 'H']
     
     mode = options.mode
-    forceMuElCr = True
 
     # .e.g. fitDiagnosticsHToZATo2L2B_gg_fusion_nb2_resolved_boosted_OSSF_mbb_MH_442.63_MA_95.27.root
     opts = options.fitdiag.split('/')[-1].split('_')
     prod = '_'.join(opts[1:3])
     nb   = opts[3] 
     process = f'gg{heavy}' if prod == 'gg_fusion' else f'bb{heavy}' 
-    basedir = os.path.dirname(options.fitdiag) 
-    catname = options.fitdiag.replace('.root', '').split('/')[-1].split(prod)[-1].split(f'_{mode}_')[0] 
+    basedir = os.path.dirname(options.fitdiag)
+    file    = options.fitdiag.replace('.root', '').split('/')[-1]
+    catname = file.split(prod)[-1].split(f'_{mode}_')[0] 
+    mass    = file.split(mode +'_')[-1].replace('.','p')
+    mheavy  = mass.split('_')[-3] 
+    mlight  = mass.split('_')[-1]
     
-    #================== FIXME
-    #with open(os.path.join(basedir, f'channels{catname}_fit_b.json'), 'r') as file:
-    with open(os.path.join(basedir, f'channels_{mode}_{nb}_resolved_boosted_OSSF_fit_b.json'), 'r') as file:
+    with open(os.path.join(basedir, 'fit_b', f'channels.json'), 'r') as file: # can be found in prefit, fit_s, should be the same
         channels = json.load(file)
-    if not channels:
-        with open(os.path.join(basedir, f'channels_{mode}_{nb}_resolved_boosted_OSSF_fit_s.json'), 'r') as file:
-            channels = json.load(file)
+        
+        del channels['xmin']
+        del channels['xmax']
+        
+        new_channels = {}
+        for c, listv in channels.items():
+            if not c in new_channels.keys(): new_channels[c] =[]
+            new_channels[c] += [f"{mode}_{mass}_{v}" for v in listv]
+    
     if not channels:
         ch_per_year = options.fitdiag.replace('.root', '').split('/')[-1].split('OSSF_')[-1]
-        channels ={'ch1': [f"{ch_per_year}_{era}".replace('.','p') for era in ['UL16', 'UL17', 'UL18']]}
-    #===================
+        new_channels ={'ch1': [f"{ch_per_year}_{era}".replace('.','p') for era in ['UL16', 'UL17', 'UL18']]}
 
-    get_cats_to_plot(mode, channels)
+    get_cats_to_plot(mode, process, new_channels)
     yaml = YAML()
     with open("ZA/style_ZA_template.yml", 'r') as file:
         data = yaml.load(file)
-
-    mass   = options.fitdiag.replace('.root','').split('_')
-    mheavy = mass[-3] 
-    mlight = mass[-1]
 
     #masslabel = f"{process}: $(m_{heavy},m_{light})= ({mheavy}, {mlight}) GeV$"
     masslabel  = f"{process}: $({mheavy}, {mlight}) GeV$"

@@ -5,7 +5,7 @@ use_singularity=true  # recommended
 if $use_singularity; then
     # need LCG106 version or above https://lcginfo.cern.ch/release/106/
     cms_env # for ingrid1-gwceci users 
-    el9 bash
+    el9 bash -l
     source /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh
 else
     # Install pyenv (once): https://github.com/pyenv/pyenv#installation
@@ -36,6 +36,7 @@ if [[ ! -d "combine_postfits" ]]; then
     pushd combine_postfits  
     git remote add upstream https://github.com/kjaffel/combine_postfits.git
     git fetch upstream
+    popd
 fi
 
 pushd combine_postfits

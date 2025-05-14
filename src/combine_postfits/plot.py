@@ -67,7 +67,7 @@ def plot(
         cats = [fitDiag_uproot[f"{fit_shapes_name}"].keys()[0].split(";")[0]]
     elif isinstance(cats, str):
         cats = [cats]
-    logging.info(f"Plotting `{fit_shapes_name}` for categories: {','.join(cats)}.")
+    logging.info(f" Plotting `{fit_shapes_name}` for categories: {','.join(cats)}.")
     if restoreNorm:
         logging.info(
             f"  restoreNorm={restoreNorm}: bin-width normalization from combine will be restored."
@@ -467,7 +467,7 @@ def plot(
         np.zeros_like(data.values()),
         tot_bkg.axes[0].edges,
         yerr=[yerr, yerr],
-        histtype="band",
+        histtype="fill", # FIXME was band before
         label="Bkg. Unc.",
         zorder=-1,
     )
@@ -540,7 +540,7 @@ def plot(
         labelspacing=0.4,
         columnspacing=1.5,
     )
-    hep.yscale_legend(ax, soft_fail=True)
+    hep.yscale_legend(ax)#FIXME, soft_fail=True)
     if fit_type == "prefit":
         leg.set_title(title=fit_type.capitalize(), prop={"size": "small"})
     else:
@@ -607,7 +607,7 @@ def plot(
         labelspacing=0.4,
         columnspacing=1.5,
     )
-    hep.yscale_legend(rax, soft_fail=True)
+    hep.yscale_legend(rax)#, soft_fail=True)
     #     handles, labels = rax.get_legend_handles_labels()
     #     rax.legend(reversed(handles), reversed(labels), loc='upper right', ncol=2)
 
@@ -624,7 +624,7 @@ def plot(
             frameon=False,
         )
         ax.add_artist(at)
-        hep.plot.yscale_anchored_text(ax, soft_fail=True)
+        #hep.plot.yscale_anchored_text(ax, soft_fail=True)
 
     if chi2:
         chi2_raw = abs(data.values() - tot.values()) ** 2 / data.values()
@@ -642,7 +642,7 @@ def plot(
             frameon=False,
         )
         rax.add_artist(at)
-        hep.plot.yscale_anchored_text(rax, soft_fail=True)
+        #hep.plot.yscale_anchored_text(rax, soft_fail=True)
 
     ax.set_ylim(0, ax.get_ylim()[-1] * 1.05)
     

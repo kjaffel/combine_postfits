@@ -478,7 +478,7 @@ def main():
                     ax=ax,
                     lumi=args.lumi,
                     #lumi_format="{:0.0f}",
-                    pub=args.pub,
+                    #pub=args.pub,
                     year=args.year,
                 )
 
