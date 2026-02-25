@@ -4,9 +4,11 @@ use_singularity=true  # recommended
 
 if $use_singularity; then
     # need LCG106 version or above https://lcginfo.cern.ch/release/106/
+    source ~/.bashrc
     cms_env # for ingrid1-gwceci users 
     el9 bash -l
     source /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh
+    ## source forcontainer.sh  # nasty bug only for ingrid1-gwceci users
 else
     # Install pyenv (once): https://github.com/pyenv/pyenv#installation
     #curl https://pyenv.run | bash

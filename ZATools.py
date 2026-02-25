@@ -5,16 +5,24 @@ import ruamel
 
 from ruamel.yaml import YAML
 
-def WriteChannelOnPlotIt(channels, latex_opts):
+
+def WriteChannelOnPlotIt(data, latex_opts, mode):
     plotit_texts = {}
-    for ch, cfg in channels.items():
-        ch_per_bin = cfg[0].split('_')[4:]
+    for ch, cfg in data.items():
+        if ch in ['xmin', 'xmax']:
+            continue
+        if mode =='dnn':
+            node = cfg[0].split('_')[2]
+            ch_per_bin = cfg[0].split('_')[5:]
+        else:
+            node = ''
+            ch_per_bin = cfg[0].split('_')[4:]
         ch_per_bin[-1] = latex_opts[ch_per_bin[-1]]
-        plotit_texts[ch] = ch_per_bin
+        plotit_texts[ch] = [node]+ch_per_bin
     return plotit_texts
 
 
-def get_cats_to_plot(mode, process, channels):
+def get_cats_to_plot(filediagnostic, mode, process, channels):
     combine_cats_per_year = []
     all_cats = []
     SRonly_cats = []
@@ -36,20 +44,32 @@ def get_cats_to_plot(mode, process, channels):
     region = []
     flavor = []
     
-    """
-    texts = WriteChannelOnPlotIt(channels, latex_opts)
+    texts = WriteChannelOnPlotIt(channels, latex_opts, mode)
     for i, t in enumerate(texts.values()):
-        nb, reg, flav = t
+        nb, reg, flav, node = t[1],t[2],t[3],t[0]
         if nb not in reco:
             reco.append(nb)
         if reg not in region:
             region.append(reg)
         if flav not in flavor:
             flavor.append(flav)
-    catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}"
-    """
-    catheader = '' # reset for now
+                
+    if '_nb2_' in filediagnostic: nb = 'nb2'
+    elif '_nb3_' in filediagnostic: nb = 'nb3'
+    elif 'nb2PLusnb3' in filediagnostic: nb  = 'nb2+nb3'
+
+    if 'resolved_boosted' in filediagnostic: reg = 'resolved+boosted'
+    elif 'resolved' in filediagnostic: reg = 'resolved'
+    elif 'boosted' in filediagnostic : reg = 'boosted'
     
+    flav = ''
+    for f in ['MuMu', 'ElEl', 'OSSF', 'MuEl']:
+        if f == 'MuEl': flav +='+'
+        if f in filediagnostic: flav +=latex_opts[f]
+    
+    catheader = f"{nb} {reg}, {flav}"
+    #catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}"
+    #catheader = '' # reset for now
     print(tot_cats +'---'+ catheader)
     return
 
@@ -85,12 +105,20 @@ if __name__ == "__main__":
     basedir = os.path.dirname(options.fitdiag)
     file    = options.fitdiag.replace('.root', '').split('/')[-1]
     catname = file.split(prod)[-1].split(f'_{mode}_')[0] 
-    mass    = file.split(mode +'_')[-1].replace('.','p')
+    mass    = file.split(mode +'_')[-1]
     mheavy  = mass.split('_')[-3] 
     mlight  = mass.split('_')[-1]
+    mass    = mass.replace('.','p')
     
-    with open(os.path.join(basedir, 'fit_b', f'channels.json'), 'r') as file: # can be found in prefit, fit_s, should be the same
-        channels = json.load(file)
+    if os.path.isfile(os.path.join(basedir, 'fit_b', f'channels.json')):
+        jsf = os.path.join(basedir, 'fit_b', f'channels.json') 
+    elif os.path.isfile(os.path.join(basedir, 'fit_s', f'channels.json')):
+        jsf = os.path.join(basedir, 'fit_s', f'channels.json')
+    else:
+        print(f" file : 'channels.json' was not found in {os.path.join(basedir)}")
+
+    with open(jsf, 'r') as jsfile: # can be found in prefit, fit_s, should be the same
+        channels = json.load(jsfile)
         
         del channels['xmin']
         del channels['xmax']
@@ -102,9 +130,9 @@ if __name__ == "__main__":
     
     if not channels:
         ch_per_year = options.fitdiag.replace('.root', '').split('/')[-1].split('OSSF_')[-1]
-        new_channels ={'ch1': [f"{ch_per_year}_{era}".replace('.','p') for era in ['UL16', 'UL17', 'UL18']]}
-
-    get_cats_to_plot(mode, process, new_channels)
+        new_channels = {'ch1': [f"{ch_per_year}_{era}".replace('.','p') for era in ['UL16', 'UL17', 'UL18']]}
+    
+    get_cats_to_plot(file, mode, process, new_channels)
     yaml = YAML()
     with open("ZA/style_ZA_template.yml", 'r') as file:
         data = yaml.load(file)

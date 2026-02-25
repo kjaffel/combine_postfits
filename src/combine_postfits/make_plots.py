@@ -173,6 +173,13 @@ def main():
         choices={True, False},
         help="Clip x-axis to range of data",
     )
+    parser.add_argument(
+        "--restoreNorm",
+        type=str2bool,
+        default="True",
+        choices={True, False},
+        help="bin-width normalization from combine will be restored",
+    )
 
     # Labels
     pseudo = parser.add_mutually_exclusive_group(required=True)
@@ -251,7 +258,7 @@ def main():
     )
     parser.add_argument("--noroot", action="store_true", help="Skip ROOT dependency")
 
-    convert_to_mass =True  # at some point turn to flag 
+    convert_to_mass = False  # at some point turn to flag 
 
     # Debug
     parser.add_argument("--verbose", "-v", "-_v", action="store_true", help="Verbose logging")
@@ -446,7 +453,7 @@ def main():
                     rmap=rmap,
                     blind=blind,
                     cats=channel,
-                    restoreNorm=False,
+                    restoreNorm=args.restoreNorm,
                     clipx=args.clipx,
                     fitDiag_root=rfd,
                     style=style,
@@ -465,10 +472,13 @@ def main():
                         rax2 = rax.twiny()
                         rax2.xaxis.set_ticks_position('bottom')  # Set ticks for the new axis at the bottom
                         rax2.xaxis.set_label_position('bottom')
-                        rax2.set_xlim(100., 1400.)
+                        if 'mbb' in args.xlabel:
+                            rax2.set_xlim(0., 1200.)
+                        elif 'mllbb' in args.xlabel:
+                            rax2.set_xlim(120., 1400.)
                         rax2.set_xlabel(args.xlabel, labelpad=15)
                     else:
-                        rax.set_xlabel(args.xlabel)
+                        rax.set_xlabel(args.xlabel.replace('GeV', 'bins'))
                     
                 if args.ylabel is not None:
                     rax.set_ylabel(args.ylabel)

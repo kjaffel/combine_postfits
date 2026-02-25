@@ -2,7 +2,7 @@
 
 era=fullrun2
 dnn_cut='0p94'
-modes=('mllbb' 'mbb') # 'dnn')
+modes=('mbb' 'mllbb') # ('mllbb' 'mbb' 'dnn')
 forceMuElCr=true
 mergeCats=true
 fit=fit_s       # {fit_s,fit_b,prefit,all}
@@ -19,7 +19,7 @@ workdir=/home/ucl/cp3/kjaffel/bamboodev/ZA_FullAnalysis/ZAStatAnalysis/
 
 lookfor=''
 if $forceMuElCr; then
-    lookfor='_MuEl_'
+    lookfor='_MuEl'
 fi
 
 plus_args=''
@@ -30,7 +30,9 @@ fi
 for mode in ${modes[*]}; do
 
     echo Working on mode ... $mode
-    path=$workdir/ul_combinerun2results/__ver15/floating_toponium/work__ULfullrun2/fit/$mode/2POIs_r/
+    #path=$workdir/ul_combinerun2results/__ver15/floating_toponium/work__ULfullrun2/fit/$mode/2POIs_r/
+    path=$workdir/ul_combinerun2results/__ver16/floating_toponium/work__ULfullrun2/fit/$mode/2POIs_r/
+    #path=$workdir/ul_combinerun2results/__ver16/floating_toponium/pnn/work__ULfullrun2/bayesian_rebin_on_S/fit/$mode/2POIs_r/
 
     file_list=$(find "$path" -type f -name "fitDiagnostics*$lookfor*$mode*.root")
     
@@ -63,8 +65,14 @@ for mode in ${modes[*]}; do
     
     	if [[ "$fitDiagnostics" == *"gg_fusion"* ]]; then
             sig="ggH"
+            lookfor2='nb2_resolved_MuMu_ElEl'
         else
             sig="bbH"
+            lookfor2='nb2PLusnb3_resolved_OSSF'
+        fi
+
+        if ! echo "$fitDiagnostics" | grep -q "$lookkfor2"; then
+            continue
         fi
         
         # Use the captured values in the Bash script
@@ -77,15 +85,15 @@ for mode in ${modes[*]}; do
         				 --unblind \
         				 --style ZA/style_ZA.yml \
         				 -vv \
-        				 --clipx true \
+        				 --clipx false \
         				 -o $output \
         				 --fit $fit \
                          --xlabel "$xlabel" \
                          --lumi 138 \
                          --catheader "$catheader" \
                          --cats "$tot_cats" \
-                         #--sigs $sig \
-                         #--rmap $sig:r \
+                         --sigs $sig \
+                         --rmap $sig:r
         echo '================='
     done
 done

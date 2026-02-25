@@ -49,6 +49,7 @@ def plot(
     | str = False,  # Remove enteries with total yield below treshold eg. {False | 10 | '5%'}
     # Style opts
     catheader=None,
+    removeNegative= False,
     restoreNorm=True,  # Combine outputs binwnormed results - restores to nominal
     fitDiag_root=None,  # ROOT fitDiagnostics file to read fit results and display signal strength
     rmap: dict | None = None,
@@ -216,7 +217,6 @@ def plot(
     sigs_original = sigs.copy()  # Allow negatives in ratio
     _sigs, _bkgs = [], []
     
-    removeNegative= False
     for list_in, list_out in zip([sigs, bkgs], [_sigs, _bkgs]):
         for key in list_in:
             if key not in style:
@@ -467,7 +467,7 @@ def plot(
         np.zeros_like(data.values()),
         tot_bkg.axes[0].edges,
         yerr=[yerr, yerr],
-        histtype="fill", # FIXME was band before
+        histtype="step", # FIXME ['fill', 'step', 'errorbar'] 
         label="Bkg. Unc.",
         zorder=-1,
     )
@@ -540,7 +540,14 @@ def plot(
         labelspacing=0.4,
         columnspacing=1.5,
     )
-    hep.yscale_legend(ax)#FIXME, soft_fail=True)
+    # only try scaling if the legend exists
+    if leg is not None:
+        try:
+            hep.yscale_legend(ax)
+            #FIXME hep.yscale_legend(ax, soft_fail=True)
+        except AttributeError:
+            # fallback if mplhep breaks
+            pass
     if fit_type == "prefit":
         leg.set_title(title=fit_type.capitalize(), prop={"size": "small"})
     else:
@@ -607,7 +614,8 @@ def plot(
         labelspacing=0.4,
         columnspacing=1.5,
     )
-    hep.yscale_legend(rax)#, soft_fail=True)
+    if ax.get_legend() is not None:
+        hep.yscale_legend(rax)#, soft_fail=True)
     #     handles, labels = rax.get_legend_handles_labels()
     #     rax.legend(reversed(handles), reversed(labels), loc='upper right', ncol=2)
 

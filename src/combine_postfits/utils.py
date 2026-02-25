@@ -87,6 +87,7 @@ def add_to_headers(cat, headers, latex_opts):
         if ch_per_bin not in headers:
             headers.append(ch_per_bin)
 
+
 def write_ZAHeader(cats, year=None):
     headers  = []
     combYears= ''
@@ -97,7 +98,6 @@ def write_ZAHeader(cats, year=None):
                 add_to_headers(subcat, headers, latex_opts)
         else:
             add_to_headers(cat, headers, latex_opts)
-    
     reco = []
     region = []
     flavor = []
@@ -116,6 +116,7 @@ def write_ZAHeader(cats, year=None):
     catheader = f"{'+'.join(reco)} {'+'.join(region)}, {'+'.join(flavor)}" 
     return catheader, year, lumi
 
+
 def adjust_lightness(color, amount=0.5):
     import matplotlib.colors as mc
     import colorsys
@@ -127,6 +128,7 @@ def adjust_lightness(color, amount=0.5):
     rgb = colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
     scaled_rgb = tuple([int(x * 255) for x in rgb])
     return "#{0:02x}{1:02x}{2:02x}".format(*scaled_rgb)
+
 
 def module_exists(module_name):
     return module_name in (name for loader, name, ispkg in iter_modules())
